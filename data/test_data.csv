@@ -1,0 +1,6 @@
+test_email_subject,test_email_body,expected_label,test_scenario
+E2E Test Email Subject 1,This is the first test email body for E2E testing.,INBOX,basic_email_send
+E2E Test Email Subject 2,This is the second test email body with special characters: !@#$%^&*(),INBOX,special_characters_test
+E2E Bulk Test Email,This email is part of bulk testing scenarios.,INBOX,bulk_operation_test
+E2E Priority Email,This is a high priority test email for testing filters.,INBOX,priority_filter_test
+E2E Automated Test,This email tests automated label assignment functionality.,INBOX,label_automation_test

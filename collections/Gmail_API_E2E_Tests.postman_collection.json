@@ -1,0 +1,475 @@
+{
+  "info": {
+    "name": "Gmail API E2E Tests",
+    "description": "Comprehensive end-to-end testing collection for Gmail API functionality including OAuth 2.0 authentication flow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "oauth2",
+    "oauth2": [
+      {
+        "key": "tokenName",
+        "value": "Gmail OAuth Token",
+        "type": "string"
+      },
+      {
+        "key": "clientId",
+        "value": "{{client_id}}",
+        "type": "string"
+      },
+      {
+        "key": "clientSecret",
+        "value": "{{client_secret}}",
+        "type": "string"
+      },
+      {
+        "key": "accessTokenUrl",
+        "value": "https://oauth2.googleapis.com/token",
+        "type": "string"
+      },
+      {
+        "key": "authUrl",
+        "value": "https://accounts.google.com/o/oauth2/auth",
+        "type": "string"
+      },
+      {
+        "key": "scope",
+        "value": "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.labels",
+        "type": "string"
+      },
+      {
+        "key": "grant_type",
+        "value": "authorization_code",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://gmail.googleapis.com/gmail/v1"
+    },
+    {
+      "key": "user_id",
+      "value": "me"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Get OAuth Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('OAuth token received', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('access_token');",
+                  "    pm.environment.set('access_token', responseJson.access_token);",
+                  "    ",
+                  "    if (responseJson.refresh_token) {",
+                  "        pm.environment.set('refresh_token', responseJson.refresh_token);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "client_id",
+                  "value": "{{client_id}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{client_secret}}"
+                },
+                {
+                  "key": "refresh_token",
+                  "value": "{{refresh_token}}"
+                },
+                {
+                  "key": "grant_type",
+                  "value": "refresh_token"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://oauth2.googleapis.com/token",
+              "protocol": "https",
+              "host": ["oauth2", "googleapis", "com"],
+              "path": ["token"]
+            },
+            "description": "Exchange refresh token for access token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile & User Info",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User profile retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('emailAddress');",
+                  "    pm.expect(responseJson).to.have.property('messagesTotal');",
+                  "    pm.expect(responseJson).to.have.property('threadsTotal');",
+                  "    ",
+                  "    pm.environment.set('user_email', responseJson.emailAddress);",
+                  "    console.log('User email:', responseJson.emailAddress);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "profile"]
+            },
+            "description": "Get the current user's Gmail profile"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Labels Management",
+      "item": [
+        {
+          "name": "List All Labels",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Labels retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('labels');",
+                  "    pm.expect(responseJson.labels).to.be.an('array');",
+                  "    ",
+                  "    // Store some common label IDs for later use",
+                  "    var inbox = responseJson.labels.find(label => label.name === 'INBOX');",
+                  "    var sent = responseJson.labels.find(label => label.name === 'SENT');",
+                  "    var draft = responseJson.labels.find(label => label.name === 'DRAFT');",
+                  "    ",
+                  "    if (inbox) pm.environment.set('inbox_label_id', inbox.id);",
+                  "    if (sent) pm.environment.set('sent_label_id', sent.id);",
+                  "    if (draft) pm.environment.set('draft_label_id', draft.id);",
+                  "    ",
+                  "    console.log('Total labels found:', responseJson.labels.length);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/labels",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "labels"]
+            },
+            "description": "Retrieve all labels in the user's mailbox"
+          }
+        },
+        {
+          "name": "Create Test Label",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "const timestamp = Date.now();",
+                  "pm.environment.set('test_label_name', `E2E_Test_${timestamp}`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Label created successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('name');",
+                  "    pm.expect(responseJson.name).to.eql(pm.environment.get('test_label_name'));",
+                  "    ",
+                  "    pm.environment.set('test_label_id', responseJson.id);",
+                  "    console.log('Created label ID:', responseJson.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{test_label_name}}\",\n  \"messageListVisibility\": \"show\",\n  \"labelListVisibility\": \"labelShow\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/labels",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "labels"]
+            },
+            "description": "Create a new label for testing purposes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "List Inbox Messages",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Inbox messages retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('messages');",
+                  "    ",
+                  "    if (responseJson.messages && responseJson.messages.length > 0) {",
+                  "        pm.environment.set('sample_message_id', responseJson.messages[0].id);",
+                  "        pm.environment.set('sample_thread_id', responseJson.messages[0].threadId);",
+                  "        console.log('Sample message ID stored:', responseJson.messages[0].id);",
+                  "    }",
+                  "    ",
+                  "    console.log('Total messages in inbox:', responseJson.resultSizeEstimate);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/messages?labelIds=INBOX&maxResults=10",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "messages"],
+              "query": [
+                {
+                  "key": "labelIds",
+                  "value": "INBOX"
+                },
+                {
+                  "key": "maxResults",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get the first 10 messages from inbox"
+          }
+        },
+        {
+          "name": "Get Message Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Message details retrieved successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('payload');",
+                  "    pm.expect(responseJson).to.have.property('labelIds');",
+                  "    ",
+                  "    // Extract subject and sender for verification",
+                  "    var headers = responseJson.payload.headers;",
+                  "    var subject = headers.find(h => h.name === 'Subject');",
+                  "    var from = headers.find(h => h.name === 'From');",
+                  "    ",
+                  "    if (subject) console.log('Message subject:', subject.value);",
+                  "    if (from) console.log('Message from:', from.value);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/messages/{{sample_message_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "messages", "{{sample_message_id}}"]
+            },
+            "description": "Get details of a specific message"
+          }
+        },
+        {
+          "name": "Send Test Email",
+          "event": [
+            {
+              "listen": "pre-request",
+              "script": {
+                "exec": [
+                  "// Create email content",
+                  "const timestamp = new Date().toISOString();",
+                  "const subject = `E2E Test Email - ${timestamp}`;",
+                  "const body = `This is an automated test email sent at ${timestamp}`;",
+                  "const userEmail = pm.environment.get('user_email') || 'test@example.com';",
+                  "",
+                  "// Create RFC 2822 format message",
+                  "const emailContent = [",
+                  "    `To: ${userEmail}`,",
+                  "    `Subject: ${subject}`,",
+                  "    `Content-Type: text/plain; charset=utf-8`,",
+                  "    '',",
+                  "    body",
+                  "].join('\\r\\n');",
+                  "",
+                  "// Base64 encode the email content",
+                  "const encodedEmail = btoa(unescape(encodeURIComponent(emailContent)))",
+                  "    .replace(/\\+/g, '-')",
+                  "    .replace(/\\//g, '_')",
+                  "    .replace(/=+$/, '');",
+                  "",
+                  "pm.environment.set('encoded_email', encodedEmail);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Email sent successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var responseJson = pm.response.json();",
+                  "    pm.expect(responseJson).to.have.property('id');",
+                  "    pm.expect(responseJson).to.have.property('labelIds');",
+                  "    ",
+                  "    pm.environment.set('sent_message_id', responseJson.id);",
+                  "    console.log('Email sent with ID:', responseJson.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"raw\": \"{{encoded_email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/messages/send",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "messages", "send"]
+            },
+            "description": "Send a test email to verify email sending functionality"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cleanup",
+      "item": [
+        {
+          "name": "Delete Test Label",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Test label deleted successfully', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "    console.log('Test label deleted successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/users/{{user_id}}/labels/{{test_label_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["users", "{{user_id}}", "labels", "{{test_label_id}}"]
+            },
+            "description": "Clean up by deleting the test label created during testing"
+          }
+        }
+      ]
+    }
+  ]
+}

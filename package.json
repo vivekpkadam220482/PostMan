@@ -1,0 +1,51 @@
+{
+  "name": "gmail-api-e2e-postman-tests",
+  "version": "1.0.0",
+  "description": "End-to-End Postman API testing suite for Gmail functionality using OAuth 2.0 authentication",
+  "main": "scripts/newman_runner.js",
+  "scripts": {
+    "test": "node scripts/newman_runner.js full Development",
+    "test:smoke": "node scripts/newman_runner.js smoke Development",
+    "test:performance": "node scripts/newman_runner.js performance Development 5",
+    "test:prod": "node scripts/newman_runner.js full Production",
+    "test:prod:smoke": "node scripts/newman_runner.js smoke Production",
+    "setup:oauth": "node scripts/setup_oauth.js",
+    "install:newman": "npm install -g newman",
+    "install:deps": "npm install",
+    "clean:reports": "rimraf reports/*",
+    "lint": "eslint scripts/*.js",
+    "format": "prettier --write scripts/*.js"
+  },
+  "keywords": [
+    "gmail",
+    "api",
+    "testing",
+    "postman",
+    "e2e",
+    "automation",
+    "oauth2",
+    "newman"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "newman": "^6.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "prettier": "^3.0.0",
+    "rimraf": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/gmail-api-e2e-postman-tests.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/gmail-api-e2e-postman-tests/issues"
+  },
+  "homepage": "https://github.com/yourusername/gmail-api-e2e-postman-tests#readme"
+}

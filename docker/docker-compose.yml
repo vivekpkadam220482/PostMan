@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  gmail-api-tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gmail-api-e2e-tests
+    environment:
+      - NODE_ENV=test
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+    volumes:
+      - ../reports:/app/reports
+      - ../environments:/app/environments:ro
+      - ../collections:/app/collections:ro
+      - ../data:/app/data:ro
+    command: npm run test:smoke
+    restart: "no"
+    networks:
+      - test-network
+
+  # Optional: Add a service for running full tests
+  gmail-api-full-tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gmail-api-full-tests
+    environment:
+      - NODE_ENV=test
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+    volumes:
+      - ../reports:/app/reports
+      - ../environments:/app/environments:ro
+      - ../collections:/app/collections:ro
+      - ../data:/app/data:ro
+    command: npm run test
+    restart: "no"
+    networks:
+      - test-network
+    profiles:
+      - full
+
+  # Optional: Add a service for performance tests
+  gmail-api-performance-tests:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: gmail-api-performance-tests
+    environment:
+      - NODE_ENV=test
+      - CLIENT_ID=${CLIENT_ID}
+      - CLIENT_SECRET=${CLIENT_SECRET}
+      - REFRESH_TOKEN=${REFRESH_TOKEN}
+    volumes:
+      - ../reports:/app/reports
+      - ../environments:/app/environments:ro
+      - ../collections:/app/collections:ro
+      - ../data:/app/data:ro
+    command: npm run test:performance
+    restart: "no"
+    networks:
+      - test-network
+    profiles:
+      - performance
+
+networks:
+  test-network:
+    driver: bridge
